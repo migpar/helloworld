@@ -1,0 +1,32 @@
+pipeline{
+    
+    agent any
+    
+    stages{
+        
+        stage('Get Code'){
+              steps{
+                  // obtener el codigo del repo
+                  git 'https://github.com/migpar/helloworld.git'
+              }
+        }   
+        
+        
+        stage('build') {
+            steps {
+                echo 'Eyy, esto es python, No hay que compilar nada!!'
+                echo WORKSPACE
+                bat 'dir'
+            }
+        }
+        
+        stage('UnitTest') {
+            steps {
+                bat '''
+                    set PYTOHNPATH=%WORKSPACE%
+                    C:\\Users\\miguel\\AppData\\Local\\Programs\\Python\\Python312\\Scripts\\pytest --junitxml=result-unit.xml test\\unit
+                '''
+            }
+        }
+    }
+}

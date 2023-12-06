@@ -4,6 +4,12 @@ pipeline{
     
     stages{
         
+         stage('Clean workspace') {
+            steps {
+                cleanWs()
+            }
+        }
+        
         stage('Get Code'){
               steps{
                   // obtener el codigo del repo
@@ -17,15 +23,36 @@ pipeline{
                 echo 'Eyy, esto es python, No hay que compilar nada!!'
                 echo WORKSPACE
                 bat 'dir'
+                bat 'dir test\\unit'
             }
         }
         
         stage('UnitTest') {
             steps {
+                cachtError(buildResult: 'UNESTABLE', stageResult('FAILURE'))
+                    bat '''
+                        set PYTOHNPATH=%WORKSPACE%
+                        C:\\Users\\miguel\\AppData\\Local\\Programs\\Python\\Python312\\Scripts\\pytest --junitxml=result-unit.xml test\\unit
+                    '''
+            }
+        }
+
+        stage('Rest'){
+            steps {
                 bat '''
+                    set FLASK_APP=app\\api.py
+                    set FLASK_ENV=development
+                    start flask run
+                    start java -jar C:\\Users\\miguel\\Desktop\\workspace\\helloworld\\test\\wiremock\\mappings\\wiremockstandalone\\wiremock-standalone-3.3.1.jar --port 9090 --root-dir C:\\Users\\miguel\\Desktop\\workspace\\helloworld\\test\\wiremock\\mappings
                     set PYTOHNPATH=%WORKSPACE%
-                    C:\\Users\\miguel\\AppData\\Local\\Programs\\Python\\Python312\\Scripts\\pytest --junitxml=result-unit.xml test\\unit
+                    C:\\Users\\miguel\\AppData\\Local\\Programs\\Python\\Python312\\Scripts\\pytest --junitxml=result-unit.xml test\\rest
                 '''
+            }
+        }
+
+        stage('Results'){
+            steps {
+                junit 'result*.xml'
             }
         }
     }

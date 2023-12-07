@@ -25,7 +25,7 @@ pipeline{
                 bat 'dir'
             }
         }
-
+        
         stage('Test Stages') {
             parallel{
                 stage('Unit') {

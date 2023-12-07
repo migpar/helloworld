@@ -63,13 +63,13 @@ pipeline{
     }
 }
 
-// comentario de prueba
+// comentario de prueba otra vez
 pipeline{
     
     agent any
      options {
         scm {
-            pollingSchedule('* * * * *') // Configura el polling para cada minuto
+            pollingSchedule('* * * * 1') // Configura el polling para cada minuto
         }
     }
     

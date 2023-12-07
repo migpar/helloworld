@@ -67,6 +67,11 @@ pipeline{
 pipeline{
     
     agent any
+     options {
+        scm {
+            pollingSchedule('* * * * *') // Configura el polling para cada minuto
+        }
+    }
     
     stages{
         stage('Get Code'){

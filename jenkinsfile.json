@@ -25,7 +25,7 @@ pipeline{
                 bat 'dir'
             }
         }
-        
+
         stage('Test Stages') {
             parallel{
                 stage('Unit') {
@@ -63,7 +63,7 @@ pipeline{
     }
 }
 
-
+// comentario de prueba
 pipeline{
     
     agent any

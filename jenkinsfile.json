@@ -63,11 +63,11 @@ pipeline{
     }
 }
 
-// comentario de prueba
+// comentario de prueba de cron 2ª prueba
 pipeline{
     
     agent any
-        
+
     stages{
         stage('Get Code'){
               steps{

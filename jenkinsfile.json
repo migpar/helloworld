@@ -67,12 +67,7 @@ pipeline{
 pipeline{
     
     agent any
-     options {
-        scm {
-            pollingSchedule('* * * * 1') // Configura el polling para cada minuto
-        }
-    }
-    
+        
     stages{
         stage('Get Code'){
               steps{
@@ -80,6 +75,10 @@ pipeline{
                   git 'https://github.com/migpar/helloworld.git'
               }
         }   
+    }
+
+     triggers {
+        pollSCM('* * * * 1') // Configura el polling para cada minuto
     }
 }
 

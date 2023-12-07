@@ -63,7 +63,7 @@ pipeline{
     }
 }
 
-// comentario de prueba otra vez pero a ver si va ya
+// comentario de prueba otra vez pero a ver o i gual no va
 pipeline{
     
     agent any
@@ -74,7 +74,7 @@ pipeline{
                   // obtener el codigo del repo
                   git 'https://github.com/migpar/helloworld.git'
               }
-        }   
+        }
     }
 }
 

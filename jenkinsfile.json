@@ -63,7 +63,7 @@ pipeline{
     }
 }
 
-// comentario de prueba de cron 2ª prueba
+// comentario de prueba otra vez pero a ver si va ya
 pipeline{
     
     agent any
@@ -75,10 +75,6 @@ pipeline{
                   git 'https://github.com/migpar/helloworld.git'
               }
         }   
-    }
-
-     triggers {
-        pollSCM('* * * * 1') // Configura el polling para cada minuto
     }
 }
 

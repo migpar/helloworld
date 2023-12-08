@@ -28,6 +28,7 @@ pipeline{
 
         stage('Test Stages') {
             parallel{
+
                 stage('Unit') {
                     steps {
                         catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE' ){
@@ -38,23 +39,23 @@ pipeline{
                         }
                     }
                 }
+
                 stage('Rest') {
                     steps {
                         bat '''
                             set FLASK_APP="%WORKSPACE%\\app\\api.py"
                             set FLASK_ENV=development
-                            start cmd /c "flask run ^> log.txt 2^>^&1"
-                            start timeout /t 10 /nobreak
+                            call cmd /c "flask run"
                             start java -jar "C:\\Users\\miguel\\Desktop\\workspace\\helloworld\\test\\wiremock\\mappings\\wiremockstandalone\\wiremock-standalone-3.3.1.jar" --port 9090 --root-dir "C:\\Users\\miguel\\Desktop\\workspace\\helloworld\\test\\wiremock"
+                            start timeout /t 10 /nobreak
                             set PYTHONPATH=%WORKSPACE%
-                            "C:\\Users\\miguel\\AppData\\Local\\Programs\\Python\\Python312\\Scripts\\pytest" --junitxml=result-rest.xml test\\rest
+                            C:\\Users\\miguel\\AppData\\Local\\Programs\\Python\\Python312\\Scripts\\pytest --junitxml=result-rest.xml test\\rest
                         '''
                     }
                 }
 
             }
         }
-
 
         stage('Results'){
             steps {

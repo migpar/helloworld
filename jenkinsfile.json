@@ -38,19 +38,20 @@ pipeline{
                         }
                     }
                 }
-
                 stage('Rest') {
                     steps {
                         bat '''
                             set FLASK_APP="%WORKSPACE%\\app\\api.py"
                             set FLASK_ENV=development
-                            start flask run
-                            start java -jar "C:\\Users\\miguel\\Desktop\\workspace\\helloworld\\test\\wiremock\\mappings\\wiremockstandalone\\wiremock-standalone-3.3.1.jar" --port 9090 --root-dir "C:\\Users\\miguel\\Desktop\\workspace\\helloworld\\test\\wiremock\\mappings"
+                            start cmd /c "flask run ^> log.txt 2^>^&1"
+                            start timeout /t 10 /nobreak
+                            start java -jar "C:\\Users\\miguel\\Desktop\\workspace\\helloworld\\test\\wiremock\\mappings\\wiremockstandalone\\wiremock-standalone-3.3.1.jar" --port 9090 --root-dir "C:\\Users\\miguel\\Desktop\\workspace\\helloworld\\test\\wiremock"
                             set PYTHONPATH=%WORKSPACE%
                             "C:\\Users\\miguel\\AppData\\Local\\Programs\\Python\\Python312\\Scripts\\pytest" --junitxml=result-rest.xml test\\rest
                         '''
                     }
                 }
+
             }
         }
 
@@ -63,19 +64,5 @@ pipeline{
     }
 }
 
-// comentario de prueba otra vez pero a ver o i gual no va
-pipeline{
-    
-    agent any
-
-    stages{
-        stage('Get Code'){
-              steps{
-                  // obtener el codigo del repo
-                  git 'https://github.com/migpar/helloworld.git'
-              }
-        }
-    }
-}
 
     

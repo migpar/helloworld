@@ -4,12 +4,6 @@ pipeline{
     
     stages{
         
-         stage('Clean workspace') {
-            steps {
-                cleanWs()
-            }
-        }
-        
         stage('Get Code'){
               steps{
                   // obtener el codigo del repo
@@ -45,7 +39,7 @@ pipeline{
                         bat '''
                             set FLASK_APP="%WORKSPACE%\\app\\api.py"
                             set FLASK_ENV=development
-                            start /B cmd /c "flask run"
+                            start /B flask run
                             start java -jar "C:\\Users\\miguel\\Desktop\\workspace\\helloworld\\test\\wiremock\\mappings\\wiremockstandalone\\wiremock-standalone-3.3.1.jar" --port 9090 --root-dir "C:\\Users\\miguel\\Desktop\\workspace\\helloworld\\test\\wiremock"
                             set PYTHONPATH=%WORKSPACE%
                             C:\\Users\\miguel\\AppData\\Local\\Programs\\Python\\Python312\\Scripts\\pytest --junitxml=result-rest.xml test\\rest

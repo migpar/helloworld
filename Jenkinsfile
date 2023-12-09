@@ -7,7 +7,7 @@ pipeline{
         stage('Get Code'){
               steps{
                   // obtener el codigo del repo
-                  git 'https://github.com/migpar/helloworld.git'
+                  // git 'https://github.com/migpar/helloworld.git'
               }
         }   
         

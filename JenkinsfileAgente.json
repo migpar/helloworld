@@ -1,0 +1,37 @@
+pipeline{
+    
+    agent any
+
+    stages{
+        stage('random')
+            {
+                steps{
+                    bat 'hostname'
+                }
+            }
+        stage('windows')
+            {
+                agent{
+                    label 'windows'
+                }
+                steps{
+                    echo 'esto en windows'
+                    bat 'hostname'
+                }
+            }
+        stage('linux')
+            {
+                agent{
+                    label 'linux'
+                }
+                steps{
+                    echo 'esto en linux'
+                    sh '''
+                    hostname
+                    uname -a
+                    whoami
+                    '''
+                }
+            }
+    }
+}

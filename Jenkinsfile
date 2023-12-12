@@ -4,12 +4,29 @@ pipeline{
     
     stages{
         
-        stage('Get Code'){
-              steps{
-                  // obtener el codigo del repo
-                  // git 'https://github.com/migpar/helloworld.git'
-              }
-        }   
+        stage('Get Codes') {
+            parallel{
+                stage('Get Code windows'){
+                    agent{
+                        label 'windows'
+                    }
+                    steps{
+                        // obtener el codigo del repo
+                        git 'https://github.com/migpar/helloworld.git'
+                    }
+                }   
+
+                stage('Get Code linux'){
+                    agent{
+                        label 'linux'
+                    }
+                    steps{
+                        // obtener el codigo del repo
+                        git 'https://github.com/migpar/helloworld.git'
+                    }
+                } 
+        }
+    }  
         
         
         stage('build') {
@@ -35,15 +52,18 @@ pipeline{
                 }
 
                 stage('Rest') {
+                    agent{
+                    label 'linux'
+                    }
                     steps {
-                        bat '''
-                            set FLASK_APP="%WORKSPACE%\\app\\api.py"
-                            set FLASK_ENV=development
-                            start /B flask run
-                            start java -jar "C:\\Users\\miguel\\Desktop\\workspace\\helloworld\\test\\wiremock\\mappings\\wiremockstandalone\\wiremock-standalone-3.3.1.jar" --port 9090 --root-dir "C:\\Users\\miguel\\Desktop\\workspace\\helloworld\\test\\wiremock"
-                            set PYTHONPATH=%WORKSPACE%
-                            C:\\Users\\miguel\\AppData\\Local\\Programs\\Python\\Python312\\Scripts\\pytest --junitxml=result-rest.xml test\\rest
-                        '''
+                        catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE' ){
+                            sh '''
+                                env FLASK_APP=${WORKSPACE}/app/api.py python -m flask run &
+                                java -jar "${WORKSPACE}/test/wiremock/mappings/wiremockstandalone/wiremock-standalone-3.3.1.jar" --port 9090 --root-dir "${WORKSPACE}/test/wiremock" &
+                                sleep 15
+                                pytest --junitxml=result-rest.xml test/rest
+                            '''
+                        }
                     }
                 }
 
@@ -58,6 +78,3 @@ pipeline{
         }
     }
 }
-
-
-    

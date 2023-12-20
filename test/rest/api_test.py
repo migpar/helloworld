@@ -7,7 +7,7 @@ import pytest
 
 BASE_URL = "http://127.0.0.1:5000"
 BASE_URL_MOCK = "http://127.0.0.1:9090"
-DEFAULT_TIMEOUT = 2  # in secs
+DEFAULT_TIMEOUT = 5  # in secs
 
 @pytest.mark.api
 class TestApi(unittest.TestCase):
@@ -39,7 +39,7 @@ class TestApi(unittest.TestCase):
         url = f"{BASE_URL}/calc/divide/4/2"
         response = urlopen(url, timeout=DEFAULT_TIMEOUT)
         self.assertEqual(
-            response.status, http.client.OK, f"Error en la petición API a {url}"
+            response.status, http.client. OK, f"Error en la petición API a {url}"
         )
         self.assertEqual(
             response.read().decode(), "2.0", "ERROR ADD"

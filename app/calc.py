@@ -1,9 +1,6 @@
 
-
-
 class InvalidPermissions(Exception):
     pass
-
 
 class Calculator:
     def add(self, x, y):

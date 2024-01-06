@@ -47,19 +47,45 @@ pipeline{
                     }
                 }
 
-                stage('Rest') {
-                    agent{
-                    label 'raspi'
+                stage('Static'){
+                    agent {
+                        label 'localWin'
                     }
                     steps {
                         catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE' ){
-                            sh '''
-                                set PYTHONPATH=%WORKSPACE%
-                                env FLASK_APP=${WORKSPACE}/app/api.py python -m flask run &
-                                java -jar "${WORKSPACE}/test/wiremock/mappings/wiremockstandalone/wiremock-standalone-3.3.1.jar" --port 9090 --root-dir "${WORKSPACE}/test/wiremock" &
-                                sleep 10
-                                pytest --junitxml=result-rest.xml test/rest
+                            bat '''
+                                C:\\Users\\miguel\\AppData\\Local\\Programs\\Python\\Python312\\Scripts\\flake8 --exit-zero --format=pylint app > flake8.out
                             '''
+                            recordIssues tools: [flake8(name: 'Flake8', pattern: 'flake8.out')], qualityGates : [[threshold: 8, type: 'TOTAL', unstable: true], [threshold: 10, type: 'TOTAL', unstable: false]]
+                        }
+                    }
+                }
+
+                stage('Security Test'){
+                    agent {
+                        label 'localWin'
+                    }
+                    steps{
+                        catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE'){
+                            bat '''}
+                                C:\\Users\\miguel\\AppData\\Local\\Programs\\Python\\Python312\\Scripts\\bandit --exit-zero -r . -f custom -o bandit.out --severity-level medium --msg-template "{abspath}:{line}: [{test_id}] {msg}
+                            '''
+                            recordIssues tools: [pyLint(name: 'Bandit', pattern: 'bandit.out')], qualityGates : [[threshold: 2, type: 'TOTAL', unstable: true], [threshold: 4, type: 'TOTAL', unstable: false]]
+                        }
+                    }
+                }
+
+                stage('Coverage'){
+                    agent {
+                        label 'localWin'
+                    }
+                    steps{
+                        catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE' ){
+                            bat '''
+                                coverage run --branch --source=app --omit=app\\__init__.py.app\\api.py -m pytest test\\unit 
+                                coverage xml
+                            '''
+                            cobertura coberturaReportFile: 'coverage.xml', conditionalCoverageTargets: '100,30,30', lineCoverageTargets: '100,40,40', failUnstable: false
                         }
                     }
                 }
@@ -67,43 +93,39 @@ pipeline{
             }
         }
 
-        stage('Static'){
-            agent {
-                label 'localWin'
+        stage('Rest') {
+            agent{
+            label 'raspi'
             }
             steps {
-                bat '''
-                    C:\\Users\\miguel\\AppData\\Local\\Programs\\Python\\Python312\\Scripts\\flake8 --exit-zero --format=pylint app > flake8.out
-                '''
-                recordIssues tools: [flake8(name: 'Flake8', pattern: 'flake8.out')], qualityGates : [[threshold: 10, type: 'TOTAL', unstable: true], [threshold: 11, type: 'TOTAL', unstable: false]]
+                catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE' ){
+                    sh '''
+                        set PYTHONPATH=%WORKSPACE%
+                        env FLASK_APP=${WORKSPACE}/app/api.py python -m flask run &
+                        java -jar "${WORKSPACE}/test/wiremock/mappings/wiremockstandalone/wiremock-standalone-3.3.1.jar" --port 9090 --root-dir "${WORKSPACE}/test/wiremock" &
+                        sleep 10
+                        pytest --junitxml=result-rest.xml test/rest
+                    '''
+                }
             }
         }
 
-        stage('Security Test'){
+        stage('performance'){
             agent {
-                label 'localWin'
+                label 'raspi'
             }
             steps{
-                bat '''
-                    C:\\Users\\miguel\\AppData\\Local\\Programs\\Python\\Python312\\Scripts\\bandit --exit-zero -r . -f custom -o bandit.out --severity-level medium --msg-template "{abspath}:{line}: [{test_id}] {msg}
-                '''
-                recordIssues tools: [pyLint(name: 'Bandit', pattern: 'bandit.out')], qualityGates : [[threshold: 2, type: 'TOTAL', unstable: true], [threshold: 4, type: 'TOTAL', unstable: false]]
-
+                catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE' ){
+                    sh '''
+                        set PYTHONPATH=%WORKSPACE%
+                        env FLASK_APP=${WORKSPACE}/app/api.py python -m flask run &
+                        sleep 10
+                        /home/miguel/apache-jmeter-5.6.2/bin/jmeter -n -t test/jmeter/flask.jmx -f -l flask.jtl
+                    '''
+                    perfReport filterRegex: '', showTrendGraphs: true, sourceDataFiles: 'flask.jtl'
+                }
             }
-        }
-
-        stage('Coverage'){
-            agent {
-                label 'localWin'
-            }
-            steps{
-                bat '''
-                    coverage run --branch --source=app --omit=app\\__init__.py.app\\api.py -m pytest test\\unit 
-                    coverage xml
-                '''
-                cobertura coberturaReportFile: 'coverage.xml', conditionalCoverageTargets: '100,30,30', lineCoverageTargets: '100,40,40', failUnstable: false
-            }
-        }        
+        }                
 
     }
 }

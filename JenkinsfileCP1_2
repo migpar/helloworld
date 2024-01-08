@@ -39,8 +39,9 @@ pipeline{
                         set PYTHONPATH=%WORKSPACE%
                         C:\\Users\\miguel\\AppData\\Local\\Programs\\Python\\Python312\\Scripts\\pytest --junitxml=result-unit.xml test\\unit
                         whoami
+                        hostname
                     '''
-                    echo WORKSPACE
+                    junit 'result*.xml'
                 }
             }
         }
@@ -58,8 +59,9 @@ pipeline{
                         sleep 10
                         pytest --junitxml=result-rest.xml test/rest
                         whoami
+                        hostname
                     '''
-                    echo WORKSPACE
+                   junit 'result*.xml'
                 }
             }
         }
@@ -73,11 +75,13 @@ pipeline{
                     bat '''
                         C:\\Users\\miguel\\AppData\\Local\\Programs\\Python\\Python312\\Scripts\\flake8 --exit-zero --format=pylint app > flake8.out
                         whoami
+                        hostname
                     '''
-                    echo WORKSPACE
+                   
                     recordIssues tools: [flake8(name: 'Flake8', pattern: 'flake8.out')], qualityGates : [[threshold: 8, type: 'TOTAL', unstable: true], [threshold: 10, type: 'TOTAL', unstable: false]]
                 }
             }
+        }
         
         stage('Security Test'){
             agent {
@@ -88,11 +92,13 @@ pipeline{
                     bat '''}
                         C:\\Users\\miguel\\AppData\\Local\\Programs\\Python\\Python312\\Scripts\\bandit --exit-zero -r . -f custom -o bandit.out --severity-level medium --msg-template "{abspath}:{line}: [{test_id}] {msg}
                         whoami
+                        hostname
                     '''
-                    echo WORKSPACE
+                   
                     recordIssues tools: [pyLint(name: 'Bandit', pattern: 'bandit.out')], qualityGates : [[threshold: 2, type: 'TOTAL', unstable: true], [threshold: 4, type: 'TOTAL', unstable: false]]
                 }
             }
+        }
         
         stage('Coverage'){
             agent {
@@ -104,8 +110,9 @@ pipeline{
                         coverage run --branch --source=app --omit=app\\__init__.py.app\\api.py -m pytest test\\unit 
                         coverage xml
                         whoami
+                        hostname
                     '''
-                    echo WORKSPACE
+                   
                     cobertura coberturaReportFile: 'coverage.xml', conditionalCoverageTargets: '100,80,90', lineCoverageTargets: '100,85,95', failUnstable: false
                 }
             }
@@ -123,8 +130,9 @@ pipeline{
                         sleep 10
                         /home/miguel/apache-jmeter-5.6.2/bin/jmeter -n -t test/jmeter/flask.jmx -f -l flask.jtl
                         whoami
+                        hostname
                     '''
-                    echo WORKSPACE
+                    
                     perfReport filterRegex: '', showTrendGraphs: true, sourceDataFiles: 'flask.jtl'
                 }
             }

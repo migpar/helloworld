@@ -12,7 +12,7 @@ pipeline{
                     }
                     steps{
                         // obtener el codigo del repo
-                        git 'https://github.com/migpar/helloworld.git'
+                        git branch: 'feature_fix_coverage', url: 'https://github.com/migpar/helloworld.git'
                     }
                 }   
 
@@ -22,102 +22,108 @@ pipeline{
                     }
                     steps{
                         // obtener el codigo del repo
-                        git 'https://github.com/migpar/helloworld.git'
+                        git branch: 'feature_fix_coverage', url: 'https://github.com/migpar/helloworld.git'
                     }
                 } 
             }
         }  
+        stage('Testing') {
+            parallel{
+                stage('Unit') {
+                    agent{
+                        label 'localWin'
+                    }
+                    steps {
+                        catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE' ){
 
-        stage('Unit') {
-            agent{
-                label 'localWin'
-            }
-            steps {
-                catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE' ){
-                     
-                    bat '''
-                        set PYTHONPATH=%WORKSPACE%
-                        C:\\Users\\miguel\\AppData\\Local\\Programs\\Python\\Python312\\Scripts\\pytest --junitxml=result-unit.xml test\\unit
-                        whoami
-                        hostname
-                    '''
-                    junit 'result*.xml'
+                            bat '''
+                                set PYTHONPATH=%WORKSPACE%
+                                C:\\Users\\miguel\\AppData\\Local\\Programs\\Python\\Python312\\Scripts\\pytest --junitxml=result-unit.xml test\\unit
+                                whoami
+                                hostname
+                            '''
+                            junit 'result*.xml'
+                        }
+                    }
                 }
-            }
-        }
-        
-        stage('Rest') {
-            agent{
-                label 'raspi'
-            }
-            steps {
-                catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE' ){
-                    sh '''
-                        set PYTHONPATH=%WORKSPACE%
-                        env FLASK_APP=${WORKSPACE}/app/api.py python -m flask run &
-                        java -jar "${WORKSPACE}/test/wiremock/mappings/wiremockstandalone/wiremock-standalone-3.3.1.jar" --port 9090 --root-dir "${WORKSPACE}/test/wiremock" &
-                        sleep 10
-                        pytest --junitxml=result-rest.xml test/rest
-                        whoami
-                        hostname
-                    '''
-                   junit 'result*.xml'
-                }
-            }
-        }
-        
-        stage('Static'){
-            agent {
-                label 'localWin'
-            }
-            steps {
-                catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE' ){
-                    bat '''
-                        C:\\Users\\miguel\\AppData\\Local\\Programs\\Python\\Python312\\Scripts\\flake8 --exit-zero --format=pylint app > flake8.out
-                        whoami
-                        hostname
-                    '''
-                   
-                    recordIssues tools: [flake8(name: 'Flake8', pattern: 'flake8.out')], qualityGates : [[threshold: 8, type: 'TOTAL', unstable: true], [threshold: 10, type: 'TOTAL', unstable: false]]
-                }
-            }
-        }
-        
-        stage('Security Test'){
-            agent {
-                label 'localWin'
-            }
-            steps{
-                catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE'){
-                    bat '''}
-                        C:\\Users\\miguel\\AppData\\Local\\Programs\\Python\\Python312\\Scripts\\bandit --exit-zero -r . -f custom -o bandit.out --severity-level medium --msg-template "{abspath}:{line}: [{test_id}] {msg}
-                        whoami
-                        hostname
-                    '''
-                   
-                    recordIssues tools: [pyLint(name: 'Bandit', pattern: 'bandit.out')], qualityGates : [[threshold: 2, type: 'TOTAL', unstable: true], [threshold: 4, type: 'TOTAL', unstable: false]]
-                }
-            }
-        }
-        
-        stage('Coverage'){
-            agent {
-                label 'localWin'
-            }
-            steps{
-                catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE' ){
-                    bat '''
-                        coverage run --branch --source=app --omit=app\\__init__.py.app\\api.py -m pytest test\\unit 
-                        coverage xml
-                        whoami
-                        hostname
-                    '''
-                   
-                    cobertura coberturaReportFile: 'coverage.xml', conditionalCoverageTargets: '100,80,90', lineCoverageTargets: '100,85,95', failUnstable: false
-                }
-            }
-        }  
 
+                stage('Rest') {
+                    agent{
+                        label 'raspi'
+                    }
+                    steps {
+                        catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE' ){
+                            sh '''
+                                set PYTHONPATH=%WORKSPACE%
+                                env FLASK_APP=${WORKSPACE}/app/api.py python -m flask run &
+                                java -jar "${WORKSPACE}/test/wiremock/mappings/wiremockstandalone/wiremock-standalone-3.3.1.jar" --port 9090 --root-dir "${WORKSPACE}/test/wiremock" &
+                                sleep 10
+                                pytest --junitxml=result-rest.xml test/rest
+                                whoami
+                                hostname
+                            '''
+                           junit 'result*.xml'
+                        }
+                    }
+                }
+
+                stage('Static'){
+                    agent {
+                        label 'localWin'
+                    }
+                    steps {
+                        catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE' ){
+                            bat '''
+                                C:\\Users\\miguel\\AppData\\Local\\Programs\\Python\\Python312\\Scripts\\flake8 --exit-zero --format=pylint app > flake8.out
+                                whoami
+                                hostname
+                            '''
+
+                            recordIssues tools: [flake8(name: 'Flake8', pattern: 'flake8.out')], qualityGates : [
+                                [threshold: 8, type: 'TOTAL', unstable: true], 
+                                [threshold: 10, type: 'TOTAL', unstable: false]]
+                        }
+                    }
+                }
+
+                stage('Security Test'){
+                    agent {
+                        label 'localWin'
+                    }
+                    steps{
+                        catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE'){
+                            bat '''}
+                                C:\\Users\\miguel\\AppData\\Local\\Programs\\Python\\Python312\\Scripts\\bandit --exit-zero -r . -f custom -o bandit.out --severity-level medium --msg-template "{abspath}:{line}: [{test_id}] {msg}
+                                whoami
+                                hostname
+                            '''
+
+                            recordIssues tools: [pyLint(name: 'Bandit', pattern: 'bandit.out')], qualityGates : [
+                                [threshold: 5, type: 'TOTAL', unstable: true],
+                                [threshold: 8, type: 'TOTAL', unstable: false]]
+                        }
+                    }
+                }
+
+                stage('Coverage'){
+                    agent {
+                        label 'localWin'
+                    }
+                    steps{
+                        catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE' ){
+                            bat '''
+                                coverage run --branch --source=app --omit=app\\__init__.py.app\\api.py -m pytest test\\unit 
+                                coverage xml
+                                whoami
+                                hostname
+                            '''
+
+                            cobertura coberturaReportFile: 'coverage.xml', conditionalCoverageTargets: '100,80,90', lineCoverageTargets: '100,85,95', failUnstable: false
+                        }
+                    }
+                }  
+            }
+        }
         stage('performance'){
             agent {
                 label 'raspi'
@@ -136,7 +142,29 @@ pipeline{
                     perfReport filterRegex: '', showTrendGraphs: true, sourceDataFiles: 'flask.jtl'
                 }
             }
-        }                
+        }
+        
+        stage('Clean') {
+            parallel{
+                stage('Clean Windowns'){
+                    agent{
+                        label 'windows'
+                    }
+                    steps{
+                        cleanWs()
+                    }
+                }   
+                
+                stage('Clean linux'){
+                    agent{
+                        label 'linux'
+                    }
+                    steps{
+                        cleanWs()
+                    }
+                }
+            }
+        }              
 
     }
 }
